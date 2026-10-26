@@ -530,6 +530,9 @@ const uint32_t *X86RegisterInfo::getDarwinTLSCallPreservedMask() const {
   return CSR_64_TLS_Darwin_RegMask;
 }
 
+static cl::opt<bool> X86ReserveR15("x86-reserve-r15", cl::init(false), cl::Hidden,
+  cl::desc("Reserve R15 (ix-aot and wasm2c: pinned wasm memory base)"));
+
 BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   const X86FrameLowering *TFI = getFrameLowering(MF);
@@ -573,6 +576,10 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   // Set the instruction pointer register and its aliases as reserved.
   for (const MCPhysReg &SubReg : subregs_inclusive(X86::RIP))
     Reserved.set(SubReg);
+
+  if (X86ReserveR15)
+    for (const MCPhysReg &SubReg : subregs_inclusive(X86::R15))
+      Reserved.set(SubReg);
 
   // Set the frame-pointer register and its aliases as reserved if needed.
   if (TFI->hasFP(MF) || MF.getTarget().Options.FramePointerIsReserved(MF)) {

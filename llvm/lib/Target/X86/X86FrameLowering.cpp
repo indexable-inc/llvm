@@ -3366,6 +3366,12 @@ void X86FrameLowering::determineCalleeSaves(MachineFunction &MF,
                                             RegScavenger *RS) const {
   TargetFrameLowering::determineCalleeSaves(MF, SavedRegs, RS);
 
+  // A reserved R15 (-mllvm -x86-reserve-r15) is a pinned global: never save
+  // or restore it, or a write to it would be undone at return or before a
+  // tail call.
+  if (MF.getRegInfo().isReserved(X86::R15))
+    SavedRegs.reset(X86::R15);
+
   // Spill the BasePtr if it's used.
   if (TRI->hasBasePointer(MF)) {
     Register BasePtr = TRI->getBaseRegister();

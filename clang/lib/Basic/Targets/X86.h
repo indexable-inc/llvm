@@ -809,7 +809,7 @@ public:
                                       bool &HasSizeMismatch) const override {
     // rsp and rbp are the only 64-bit registers the x86 backend can currently
     // handle.
-    if (RegName == "rsp" || RegName == "rbp") {
+    if (RegName == "rsp" || RegName == "rbp" || RegName == "r15") {
       // Check that the register size is 64-bit.
       HasSizeMismatch = RegSize != 64;
       return true;
