@@ -2184,7 +2184,12 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     // own caller's stack.
     NumBytes = 0;
   else if (ShouldGuaranteeTCO && canGuaranteeTCO(CallConv))
-    NumBytes = GetAlignedArgumentStackSize(NumBytes, DAG);
+    // Must match the callee's own view (LowerFormalArguments), which aligns
+    // getStackSize(). getAlignedCallFrameSize() is first rounded up to the
+    // largest stack argument alignment, so with a 16-byte-aligned stack
+    // argument and an argument area of 8 mod 16 the caller would assume the
+    // callee pops (or, for a tail call, reuses) 16 bytes more than it does.
+    NumBytes = GetAlignedArgumentStackSize(CCInfo.getStackSize(), DAG);
 
   // A sibcall is ABI-compatible and does not need to adjust the stack pointer.
   int FPDiff = 0;
