@@ -3161,6 +3161,13 @@ bool AArch64FastISel::fastLowerCall(CallLoweringInfo &CLI) {
   if (IsTailCall)
     return false;
 
+  // finishCall does not model a callee that pops its stack arguments
+  // (tailcc, swifttailcc, fastcc with -tailcallopt): leave those calls to
+  // SelectionDAG, which records the callee-pop amount on CALLSEQ_END.
+  if ((CC == CallingConv::Fast && TM.Options.GuaranteedTailCallOpt) ||
+      CC == CallingConv::Tail || CC == CallingConv::SwiftTail)
+    return false;
+
   // FIXME: we could and should support this, but for now correctness at -O0 is
   // more important.
   if (Subtarget->isTargetILP32())
