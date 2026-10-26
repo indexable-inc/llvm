@@ -3381,7 +3381,9 @@ InstCombinerImpl::foldExtractionOfVectorDeinterleave(ZExtInst &RootZExt) {
   if (SVI) {
     // We will find other shufflevectors later.
     DIV = isDeinterleaveShuffle(SVI).first;
-    if (!DIV)
+    // A constant source (one this worklist has not folded the shuffle of
+    // yet) has no use list to walk; the shuffle itself folds instead.
+    if (!DIV || !DIV->hasUseList())
       return nullptr;
   } else {
     // We should already capture the value that got de-interleaved (i.e. DIV).
