@@ -1059,6 +1059,16 @@ bool AArch64CallLowering::isEligibleForTailCallOptimization(
   if (canGuaranteeTCO(CalleeCC, MF.getTarget().Options.GuaranteedTailCallOpt))
     return CalleeCC == CallerF.getCallingConv();
 
+  // A caller that pops its own incoming stack arguments on return (tailcc,
+  // swifttailcc, fastcc with -tailcallopt) cannot make a sibling call: the
+  // callee returns straight to our caller with a plain `ret` and leaves those
+  // bytes on the stack.
+  if (MF.getInfo<AArch64FunctionInfo>()->getArgumentStackToRestore()) {
+    LLVM_DEBUG(dbgs() << "... Cannot sibcall from a caller that pops its "
+                         "stack arguments.\n");
+    return false;
+  }
+
   // We don't have -tailcallopt, so we're allowed to change the ABI (sibcall).
   // Try to find cases where we can do that.
 
