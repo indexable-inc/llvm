@@ -4369,6 +4369,12 @@ bool AArch64DAGToDAGISel::tryReadRegister(SDNode *N) {
         // rejects); the AsmPrinter materializes the real mov/fmov.
         Register PReg = Subtarget->getTargetLowering()->matchRegisterName(
             RegString->getString());
+        // A reserved register (e.g. x18 or one reserved with +reserve-xN) is
+        // never allocated, so the generic path reads it as a plain COPY, which
+        // the register coalescer folds into its users. The opaque pseudo
+        // would instead cost a mov per read and could not be CSEd or hoisted.
+        if (PReg && Subtarget->getRegisterInfo()->isReservedReg(*MF, PReg))
+          return false;
         unsigned PseudoOp = 0;
         if (AArch64::GPR64RegClass.contains(PReg))
           PseudoOp = AArch64::READ_REGISTER_GPR64;
